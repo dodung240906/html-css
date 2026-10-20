@@ -1,0 +1,67 @@
+-- 1. Tạo CSDL
+CREATE DATABASE IF NOT EXISTS QuanLyHocSinh;
+USE QuanLyHocSinh;
+
+-- 2. Tạo bảng Giáo Viên (GiaoVien)
+CREATE TABLE GiaoVien (
+    MaGV VARCHAR(10) PRIMARY KEY,
+    HoTen VARCHAR(100) NOT NULL,
+    NgaySinh DATE,
+    GioiTinh VARCHAR(5),
+    SoDienThoai VARCHAR(15),
+    Email VARCHAR(100) UNIQUE
+);
+
+-- 3. Tạo bảng Lớp Học (LopHoc) - Có giáo viên chủ nhiệm
+CREATE TABLE LopHoc (
+    MaLop VARCHAR(10) PRIMARY KEY,
+    TenLop VARCHAR(50) NOT NULL,
+    NamHoc VARCHAR(20) NOT NULL,
+    MaGVCN VARCHAR(10),
+    FOREIGN KEY (MaGVCN) REFERENCES GiaoVien(MaGV) ON DELETE SET NULL
+);
+
+-- 4. Tạo bảng Học Sinh (HocSinh)
+CREATE TABLE HocSinh (
+    MaHS VARCHAR(10) PRIMARY KEY,
+    HoTen VARCHAR(100) NOT NULL,
+    NgaySinh DATE,
+    GioiTinh VARCHAR(5),
+    DiaChi VARCHAR(255),
+    MaLop VARCHAR(10),
+    FOREIGN KEY (MaLop) REFERENCES LopHoc(MaLop) ON DELETE SET NULL
+);
+
+-- 5. Tạo bảng Môn Học (MonHoc) - Phân công giáo viên phụ trách môn
+CREATE TABLE MonHoc (
+    MaMon VARCHAR(10) PRIMARY KEY,
+    TenMon VARCHAR(100) NOT NULL,
+    SoTiet INT DEFAULT 45,
+    MaGVPhuTrach VARCHAR(10),
+    FOREIGN KEY (MaGVPhuTrach) REFERENCES GiaoVien(MaGV) ON DELETE SET NULL
+);
+
+-- 6. Tạo bảng Bảng Điểm (BangDiem)
+CREATE TABLE BangDiem (
+    MaHS VARCHAR(10),
+    MaMon VARCHAR(10),
+    HocKy INT NOT NULL CHECK (HocKy IN (1, 2)),
+    DiemMieng FLOAT CHECK (DiemMieng BETWEEN 0 AND 10),
+    Diem15Phut FLOAT CHECK (Diem15Phut BETWEEN 0 AND 10),
+    Diem1Tiet FLOAT CHECK (Diem1Tiet BETWEEN 0 AND 10),
+    DiemThi FLOAT CHECK (DiemThi BETWEEN 0 AND 10),
+    PRIMARY KEY (MaHS, MaMon, HocKy),
+    FOREIGN KEY (MaHS) REFERENCES HocSinh(MaHS) ON DELETE CASCADE,
+    FOREIGN KEY (MaMon) REFERENCES MonHoc(MaMon) ON DELETE CASCADE
+);
+
+-- 7. Chèn dữ liệu mẫu thử nghiệm
+INSERT INTO GiaoVien (MaGV, HoTen, NgaySinh, GioiTinh, SoDienThoai, Email) VALUES
+('GV01', 'Nguyen Van Minh', '1985-05-20', 'Nam', '0912345678', 'minh.nguyen@email.com'),
+('GV02', 'Tran Thi Hoa', '1990-11-12', 'Nu', '0987654321', 'hoa.tran@email.com');
+
+INSERT INTO LopHoc (MaLop, TenLop, NamHoc, MaGVCN) VALUES
+('10A1', 'Lop 10A1', '2025-2026', 'GV01');
+
+INSERT INTO HocSinh (MaHS, HoTen, NgaySinh, GioiTinh, DiaChi, MaLop) VALUES
+('HS01', 'Le Van Nam', '2010-03-15', 'Nam', 'Ha Noi', '10A1'),
