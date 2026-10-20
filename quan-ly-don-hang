@@ -1,0 +1,60 @@
+-- 1. Tạo CSDL Quản lý đơn hàng
+CREATE DATABASE IF NOT EXISTS QuanLyDonHang;
+USE QuanLyDonHang;
+
+-- 2. Tạo bảng Khách hàng (KhachHang)
+CREATE TABLE KhachHang (
+    MaKH INT AUTO_INCREMENT PRIMARY KEY,
+    TenKH VARCHAR(100) NOT NULL,
+    Email VARCHAR(100) UNIQUE,
+    SoDienThoai VARCHAR(15),
+    DiaChi VARCHAR(255)
+);
+
+-- 3. Tạo bảng Sản phẩm (SanPham)
+CREATE TABLE SanPham (
+    MaSP INT AUTO_INCREMENT PRIMARY KEY,
+    TenSP VARCHAR(150) NOT NULL,
+    GiaBan DECIMAL(10, 2) NOT NULL,
+    SoLuongTon INT DEFAULT 0
+);
+
+-- 4. Tạo bảng Đơn hàng (DonHang)
+CREATE TABLE DonHang (
+    MaDH INT AUTO_INCREMENT PRIMARY KEY,
+    NgayDat DATETIME DEFAULT CURRENT_TIMESTAMP,
+    TongTien DECIMAL(12, 2) DEFAULT 0,
+    TrangThai VARCHAR(50) DEFAULT 'Dang xu ly',
+    MaKH INT,
+    FOREIGN KEY (MaKH) REFERENCES KhachHang(MaKH) ON DELETE CASCADE
+);
+
+-- 5. Tạo bảng Chi tiết đơn hàng (ChiTietDonHang)
+CREATE TABLE ChiTietDonHang (
+    MaDH INT,
+    MaSP INT,
+    SoLuong INT NOT NULL CHECK (SoLuong > 0),
+    DonGia DECIMAL(10, 2) NOT NULL,
+    PRIMARY KEY (MaDH, MaSP),
+    FOREIGN KEY (MaDH) REFERENCES DonHang(MaDH) ON DELETE CASCADE,
+    FOREIGN KEY (MaSP) REFERENCES SanPham(MaSP)
+);
+
+-- 6. Chèn dữ liệu mẫu thử nghiệm
+INSERT INTO KhachHang (TenKH, Email, SoDienThoai, DiaChi) VALUES
+('Nguyen Van A', 'a.nguyen@email.com', '0901234567', 'Ha Noi'),
+('Tran Thi B', 'b.tran@email.com', '0912345678', 'TP HCM');
+
+INSERT INTO SanPham (TenSP, GiaBan, SoLuongTon) VALUES
+('Dien thoai Smartphone', 15000000.00, 20),
+('Tai nghe Bluetooth', 1200000.00, 50),
+('Ban phim Co', 2500000.00, 30);
+
+INSERT INTO DonHang (MaKH, TongTien) VALUES 
+(1, 16200000.00),
+(2, 2500000.00);
+
+INSERT INTO ChiTietDonHang (MaDH, MaSP, SoLuong, DonGia) VALUES
+(1, 1, 1, 15000000.00),
+(1, 2, 1, 1200000.00),
+(2, 3, 1, 2500000.00);
