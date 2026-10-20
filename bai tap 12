@@ -1,0 +1,57 @@
+-- HỆ THỐNG QUICKFEED - TỐI ƯU HÓA INDEX VÀ GIẢI PHÓNG DUNG LƯỢNG LƯU TRỮ
+CREATE DATABASE IF NOT EXISTS quickfeed_db;
+USE quickfeed_db;
+
+-- 1. Tạo lại cấu trúc bảng Posts ban đầu
+DROP TABLE IF EXISTS Posts;
+CREATE TABLE Posts (
+    post_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    content TEXT,
+    post_type VARCHAR(10), -- 'TEXT', 'IMAGE', 'VIDEO'
+    is_visible BOOLEAN DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. Giả lập thảm họa Over-Indexing ban đầu của lập trình viên cũ
+CREATE INDEX idx_user_id ON Posts(user_id);
+CREATE INDEX idx_content ON Posts(content(255)); 
+CREATE INDEX idx_post_type ON Posts(post_type); 
+CREATE INDEX idx_is_visible ON Posts(is_visible); 
+CREATE INDEX idx_created_at ON Posts(created_at);
+
+-- ========================================================
+-- PHẦN 1: TRUY VẤN KIỂM TRA DUNG LƯỢNG DATA VÀ INDEX (BEFORE)
+-- ========================================================
+SELECT 
+    table_name AS 'Table',
+    ROUND(data_length / 1024 / 1024, 2) AS 'Data Size (MB)',
+    ROUND(index_length / 1024 / 1024, 2) AS 'Index Size (MB)',
+    ROUND((data_length + index_length) / 1024 / 1024, 2) AS 'Total Size (MB)'
+FROM information_schema.TABLES
+WHERE table_schema = 'quickfeed_db' AND table_name = 'Posts';
+
+-- ========================================================
+-- PHẦN 2: THỰC HIỆN DỌN DẸP LOẠI BỎ INDEX THỪA (CLEANUP)
+-- ========================================================
+-- Xóa Index trên cột TEXT tốn bộ nhớ khủng khiếp
+ALTER TABLE Posts DROP INDEX idx_content;
+
+-- Xóa Index trên cột post_type có độ phân giải dữ liệu (Cardinality) thấp
+ALTER TABLE Posts DROP INDEX idx_post_type;
+
+-- Xóa Index trên cột BOOLEAN is_visible có Cardinality cực thấp (chỉ có 0 và 1)
+ALTER TABLE Posts DROP INDEX idx_is_visible;
+
+-- Ghi chú: Giữ lại idx_user_id (phục vụ load profile) và idx_created_at (phục vụ sắp xếp timeline).
+
+-- ========================================================
+-- PHẦN 3: KIỂM TRA LẠI DUNG LƯỢNG SAU KHI TỐI ƯU (AFTER)
+-- ========================================================
+SELECT 
+    table_name AS 'Table',
+    ROUND(data_length / 1024 / 1024, 2) AS 'Data Size (MB)',
+    ROUND(index_length / 1024 / 1024, 2) AS 'Index Size (MB)',
+    ROUND((data_length + index_length) / 1024 / 1024, 2) AS 'Total Size (MB)'
+FROM information_schema.TABLES
+WHERE table_schema = 'quickfeed_db' AND table_name = 'Posts';
