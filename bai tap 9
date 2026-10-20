@@ -1,0 +1,30 @@
+-- Sử dụng CSDL classicmodels
+USE classicmodels;
+
+-- 1. Tạo Stored Procedure đầu tiên: findAllCustomers
+DELIMITER //
+
+CREATE PROCEDURE findAllCustomers()
+BEGIN
+    SELECT * FROM customers;
+END //
+
+DELIMITER ;
+
+-- Gọi Stored Procedure vừa tạo để thực thi
+CALL findAllCustomers();
+
+-- 2. Sửa Stored Procedure bằng cách DROP procedure cũ và CREATE lại procedure mới
+DELIMITER //
+
+DROP PROCEDURE IF EXISTS `findAllCustomers`//
+
+CREATE PROCEDURE findAllCustomers()
+BEGIN
+    SELECT * FROM customers WHERE customerNumber = 175;
+END //
+
+DELIMITER ;
+
+-- Gọi lại Stored Procedure sau khi đã cập nhật
+CALL findAllCustomers();
