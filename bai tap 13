@@ -1,0 +1,137 @@
+-- ============================================================
+-- BƯỚC 1 & 2: TẠO CSDL, BẢNG PRODUCTS VÀ CHÈN DỮ LIỆU MẪU
+-- ============================================================
+CREATE DATABASE IF NOT EXISTS demo;
+USE demo;
+
+DROP TABLE IF EXISTS Products;
+CREATE TABLE Products (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    productCode VARCHAR(20) NOT NULL UNIQUE,
+    productName VARCHAR(100) NOT NULL,
+    productPrice DECIMAL(10,2) NOT NULL,
+    productAmount INT DEFAULT 0,
+    productDescription TEXT,
+    productStatus BIT DEFAULT 1
+);
+
+INSERT INTO Products (productCode, productName, productPrice, productAmount, productDescription, productStatus) VALUES
+('P001', 'iPhone 15 Pro', 25000000.00, 10, 'Apple Smartphone', 1),
+('P002', 'Samsung Galaxy S24', 22000000.00, 15, 'Samsung Smartphone', 1),
+('P003', 'MacBook Air M2', 28000000.00, 8, 'Apple Laptop', 1),
+('P004', 'Dell XPS 13', 30000000.00, 5, 'Dell Laptop', 1),
+('P005', 'Tai nghe AirPods Pro', 5000000.00, 20, 'Apple Wireless Earbuds', 1);
+
+-- ============================================================
+-- BƯỚC 3: TẠO CHỈ MỤC (INDEX) VÀ KIỂM TRA EXPLAIN
+-- ============================================================
+-- Kiểm tra EXPLAIN trước khi tạo chỉ mục tùy chỉnh
+EXPLAIN SELECT * FROM Products WHERE productCode = 'P003';
+EXPLAIN SELECT * FROM Products WHERE productName = 'MacBook Air M2' AND productPrice = 28000000.00;
+
+-- 1. Tạo Unique Index trên cột productCode
+CREATE UNIQUE INDEX idx_productCode ON Products(productCode);
+
+-- 2. Tạo Composite Index trên 2 cột productName và productPrice
+CREATE INDEX idx_productName_price ON Products(productName, productPrice);
+
+-- 3. Kiểm tra lại EXPLAIN sau khi tạo chỉ mục để so sánh hiệu năng
+EXPLAIN SELECT * FROM Products WHERE productCode = 'P003';
+EXPLAIN SELECT * FROM Products WHERE productName = 'MacBook Air M2' AND productPrice = 28000000.00;
+
+-- ============================================================
+-- BƯỚC 4: TẠO, SỬA VÀ XÓA VIEW
+-- ============================================================
+-- 1. Tạo View lấy thông tin productCode, productName, productPrice, productStatus
+CREATE VIEW w_product_info AS
+SELECT productCode, productName, productPrice, productStatus
+FROM Products;
+
+-- Truy vấn từ View
+SELECT * FROM w_product_info;
+
+-- 2. Sửa đổi View (Cập nhật View)
+CREATE OR REPLACE VIEW w_product_info AS
+SELECT productCode, productName, productPrice, productAmount, productStatus
+FROM Products
+WHERE productPrice >= 10000000.00;
+
+SELECT * FROM w_product_info;
+
+-- 3. Xóa View
+DROP VIEW IF EXISTS w_product_info;
+
+-- ============================================================
+-- BƯỚC 5: TẠO CÁC STORED PROCEDURE
+-- ============================================================
+DELIMITER //
+
+-- 1. SP lấy tất cả thông tin của tất cả sản phẩm
+DROP PROCEDURE IF EXISTS sp_getAllProducts//
+CREATE PROCEDURE sp_getAllProducts()
+BEGIN
+    SELECT * FROM Products;
+END //
+
+-- 2. SP thêm một sản phẩm mới
+DROP PROCEDURE IF EXISTS sp_addProduct//
+CREATE PROCEDURE sp_addProduct(
+    IN p_code VARCHAR(20),
+    IN p_name VARCHAR(100),
+    IN p_price DECIMAL(10,2),
+    IN p_amount INT,
+    IN p_description TEXT,
+    IN p_status BIT
+)
+BEGIN
+    INSERT INTO Products (productCode, productName, productPrice, productAmount, productDescription, productStatus)
+    VALUES (p_code, p_name, p_price, p_amount, p_description, p_status);
+END //
+
+-- 3. SP sửa thông tin sản phẩm theo id
+DROP PROCEDURE IF EXISTS sp_updateProductById//
+CREATE PROCEDURE sp_updateProductById(
+    IN p_id INT,
+    IN p_code VARCHAR(20),
+    IN p_name VARCHAR(100),
+    IN p_price DECIMAL(10,2),
+    IN p_amount INT,
+    IN p_description TEXT,
+    IN p_status BIT
+)
+BEGIN
+    UPDATE Products
+    SET productCode = p_code,
+        productName = p_name,
+        productPrice = p_price,
+        productAmount = p_amount,
+        productDescription = p_description,
+        productStatus = p_status
+    WHERE Id = p_id;
+END //
+
+-- 4. SP xóa sản phẩm theo id
+DROP PROCEDURE IF EXISTS sp_deleteProductById//
+CREATE PROCEDURE sp_deleteProductById(
+    IN p_id INT
+)
+BEGIN
+    DELETE FROM Products WHERE Id = p_id;
+END //
+
+DELIMITER ;
+
+-- ============================================================
+-- DEMO GỌI THỬ CÁC STORED PROCEDURE
+-- ============================================================
+-- Thêm sản phẩm mới
+CALL sp_addProduct('P006', 'Chuột Logitech MX Master 3S', 2500000.00, 30, 'Wireless Mouse', 1);
+
+-- Sửa thông tin sản phẩm có Id = 1
+CALL sp_updateProductById(1, 'P001', 'iPhone 15 Pro Max', 30000000.00, 12, 'Apple Flagship Smartphone', 1);
+
+-- Xóa sản phẩm có Id = 5
+CALL sp_deleteProductById(5);
+
+-- Hiển thị danh sách sản phẩm sau khi thực hiện các thao tác
+CALL sp_getAllProducts();
