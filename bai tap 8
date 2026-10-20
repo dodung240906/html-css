@@ -1,0 +1,20 @@
+-- Sử dụng CSDL classicmodels
+USE classicmodels;
+
+-- 1. Kiểm tra kế hoạch thực thi (Execution Plan) khi chưa tạo Index (Full Table Scan)
+EXPLAIN SELECT * FROM customers WHERE customerName = 'Land of Toys Inc.';
+
+-- 2. Thêm chỉ mục (Index) cho cột customerName
+ALTER TABLE customers ADD INDEX idx_customerName(customerName);
+
+-- 3. Kiểm tra lại kế hoạch thực thi sau khi tạo Index
+EXPLAIN SELECT * FROM customers WHERE customerName = 'Land of Toys Inc.';
+
+-- 4. Tạo chỉ mục theo cặp (Composite Index) cho 2 cột contactFirstName và contactLastName
+ALTER TABLE customers ADD INDEX idx_full_name(contactFirstName, contactLastName);
+
+-- 5. Kiểm tra kế hoạch thực thi với điều kiện lọc trên cột của Composite Index
+EXPLAIN SELECT * FROM customers WHERE contactFirstName = 'Jean' OR contactFirstName = 'King';
+
+-- 6. Xóa chỉ mục idx_full_name khỏi bảng customers
+ALTER TABLE customers DROP INDEX idx_full_name;
