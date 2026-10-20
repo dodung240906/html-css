@@ -1,0 +1,63 @@
+-- CƠ SỞ DỮ LIỆU PHÒNG KHÁM HEALTHSYNC
+CREATE DATABASE IF NOT EXISTS HealthSyncDB;
+USE HealthSyncDB;
+
+-- 1. Bảng Bác sĩ (Doctors)
+CREATE TABLE Doctors (
+    doctor_id INT AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
+    specialty VARCHAR(100) NOT NULL,
+    phone_number VARCHAR(15) UNIQUE,
+    email VARCHAR(100) UNIQUE
+);
+
+-- 2. Bảng Bệnh nhân (Patients)
+CREATE TABLE Patients (
+    patient_id INT AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
+    gender ENUM('Male', 'Female', 'Other') NOT NULL,
+    date_of_birth DATE NOT NULL,
+    phone_number VARCHAR(15) UNIQUE NOT NULL,
+    address VARCHAR(255)
+);
+
+-- 3. Bảng Lịch hẹn (Appointments) - Đầy đủ các cột nghiệp vụ
+CREATE TABLE Appointments (
+    appointment_id INT AUTO_INCREMENT PRIMARY KEY,
+    patient_id INT NOT NULL,
+    doctor_id INT NOT NULL,
+    appointment_date DATETIME NOT NULL,
+    status ENUM('Scheduled', 'Completed', 'Cancelled', 'No_Show') DEFAULT 'Scheduled',
+    deposit_amount DECIMAL(10, 2) DEFAULT 0.00,
+    penalty_fee DECIMAL(10, 2) DEFAULT 0.00,
+    cancel_reason VARCHAR(255) DEFAULT NULL,
+    FOREIGN KEY (patient_id) REFERENCES Patients(patient_id) ON DELETE CASCADE,
+    FOREIGN KEY (doctor_id) REFERENCES Doctors(doctor_id) ON DELETE CASCADE
+);
+
+-- 4. Bảng Đơn thuốc (Prescriptions)
+CREATE TABLE Prescriptions (
+    prescription_id INT AUTO_INCREMENT PRIMARY KEY,
+    appointment_id INT NOT NULL,
+    medication_name VARCHAR(150) NOT NULL,
+    dosage VARCHAR(100) NOT NULL,
+    instructions TEXT,
+    issued_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (appointment_id) REFERENCES Appointments(appointment_id) ON DELETE CASCADE
+);
+
+-- Chèn dữ liệu mẫu thử nghiệm
+INSERT INTO Doctors (full_name, specialty, phone_number, email) VALUES 
+('Dr. John Smith', 'Cardiology', '0901112223', 'john.smith@healthsync.com'),
+('Dr. Sarah Connor', 'Dermatology', '0903334445', 'sarah.c@healthsync.com');
+
+INSERT INTO Patients (full_name, gender, date_of_birth, phone_number, address) VALUES 
+('Nguyen Van Anh', 'Male', '1995-04-12', '0912345678', 'Ha Noi'),
+('Tran Thi Binh', 'Female', '2000-08-20', '0987654321', 'Hai Phong');
+
+INSERT INTO Appointments (patient_id, doctor_id, appointment_date, status, deposit_amount, penalty_fee, cancel_reason) VALUES 
+(1, 1, '2026-05-15 09:00:00', 'Scheduled', 200000.00, 0.00, NULL),
+(2, 2, '2026-05-10 14:00:00', 'Cancelled', 200000.00, 50000.00, 'Huy lich qua 24h quy dinh');
+
+INSERT INTO Prescriptions (appointment_id, medication_name, dosage, instructions) VALUES 
+(1, 'Paracetamol 500mg', '2 tablets/day', 'Uong sau khi an sang va toi');
